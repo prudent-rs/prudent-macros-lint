@@ -1,0 +1,14 @@
+[package]
+name = "prudent-macros-lint"
+version = "0.0.3-delta"
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro-rules = "0.4.0"
+quote = "1.0.45"
+syn = "2.0.117"
+proc-macro2 = "1.0.106"
+
