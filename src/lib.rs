@@ -12,7 +12,7 @@ compile_error!("If you use prudent-macros-lint (usually through feature 'lint_un
 #[proc_macro]
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
-        ( $f:expr $( => $( $arg:expr ),+ )? ) => {
+        ( $f:expr ) => {
 
             let span = f.span();
             // @TODO Simplify once https://github.com/rust-lang/rust/issues/15701
@@ -20,10 +20,25 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             //
             // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
             // need these ({ and }).
-            if let Some(arg) = arg {
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        #f()
+                    }
+                })
+            }
+        }
+        ( $f:expr => $( $arg:expr ),+ ) => {
 
-                quote_spanned! {span=>
-                    ({
+            let span = f.span();
+            // @TODO Simplify once https://github.com/rust-lang/rust/issues/15701
+            // `#![feature(stmt_expr_attributes)]` is stable
+            //
+            // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
+            // need these ({ and }).
+            quote_spanned! {span=>
+                ({
                     #[deny(unused_unsafe)]
                     unsafe {
                         #f(
@@ -32,18 +47,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
                             ),*
                         )
                     }
-                    })
-                }
-            } else {
-
-                quote_spanned! {span=>
-                    ({
-                    #[deny(unused_unsafe)]
-                    unsafe {
-                        #f()
-                    }
                 })
-            }
             }
         }
     })
@@ -90,7 +94,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
 pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
         ($stat:path, $val:expr) => {
-            
+
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
@@ -99,19 +103,19 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             }
         }
 
-        ($stat:ident { $( $suffix:tt )* } $val:expr) => {
-            
+        ($_stat:ident { $( $_suffix:tt )* } $_val:expr) => {
+            // @TODO
             quote::quote! {}
         }
-        ($stat:path { $( $suffix:tt )* } $val:expr) => {
-
+        ($_stat:path { $( $_suffix:tt )* } $_val:expr) => {
+            // @TODO
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
                 }
             }
         }
-                
+
     })
     .into()
 }
@@ -120,7 +124,7 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
 pub fn unsafe_ref(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
         ($ptr:expr) => {
-            
+
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
@@ -129,7 +133,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             }
         }
         ($ptr:expr, $lifetime:lifetime) => {
-            
+
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
@@ -138,20 +142,20 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             }
         }
         ($ptr:expr, $ptr_type:ty) => {
-            
+
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
-                    &*( #ptr as *const $ptr_type)
+                    &*( #ptr as *const #ptr_type)
                 }
             }
         }
         ($ptr:expr, $ptr_type:ty, $lifetime:lifetime) => {
-            
+
             quote::quote! {
                 #[deny(unused_unsafe)]
                 unsafe {
-                    &*( #ptr as *const $ty) as &$lifetime _
+                    &*( #ptr as *const #ptr_type) as &#lifetime _
                 }
             }
         }
@@ -165,8 +169,34 @@ pub fn unsafe_mut(_input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_val(_input: TokenStream) -> TokenStream {
-    (quote::quote! {}).into()
+pub fn unsafe_val(input: TokenStream) -> TokenStream {
+    rules!(input.into() => {
+        ( $ptr:expr ) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        *#ptr
+                    }
+                })
+            }
+        }
+        ( $ptr:expr => $ptr_type:ty ) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        *( #ptr as *const #ptr_type)
+                    }
+                })
+            }
+        }
+    })
+    .into()
 }
 
 #[proc_macro]
