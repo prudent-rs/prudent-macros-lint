@@ -95,7 +95,8 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
         ($stat:path, $val:expr) => {
 
-            quote::quote! {
+            let span = stat.span();
+            quote_spanned! {span=>
                 #[deny(unused_unsafe)]
                 unsafe {
                     #stat = #val;
@@ -103,13 +104,16 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             }
         }
 
-        ($_stat:ident { $( $_suffix:tt )* } $_val:expr) => {
+        ($stat:ident { $( $_suffix:tt )* } $_val:expr) => {
             // @TODO
-            quote::quote! {}
+            let span = stat.span();
+            quote_spanned! {span=>
+            }
         }
-        ($_stat:path { $( $_suffix:tt )* } $_val:expr) => {
+        ($stat:path { $( $_suffix:tt )* } $_val:expr) => {
             // @TODO
-            quote::quote! {
+            let span = stat.span();
+            quote_spanned! {span=>
                 #[deny(unused_unsafe)]
                 unsafe {
                 }
@@ -125,38 +129,50 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
         ($ptr:expr) => {
 
-            quote::quote! {
-                #[deny(unused_unsafe)]
-                unsafe {
-                    &*#ptr
-                }
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &*#ptr
+                    }
+                })
             }
         }
         ($ptr:expr, $lifetime:lifetime) => {
 
-            quote::quote! {
-                #[deny(unused_unsafe)]
-                unsafe {
-                    &*#ptr as &#lifetime _
-                }
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &*#ptr as &#lifetime _
+                    }
+                })
             }
         }
         ($ptr:expr, $ptr_type:ty) => {
 
-            quote::quote! {
-                #[deny(unused_unsafe)]
-                unsafe {
-                    &*( #ptr as *const #ptr_type)
-                }
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &*( #ptr as *const #ptr_type)
+                    }
+                })
             }
         }
         ($ptr:expr, $ptr_type:ty, $lifetime:lifetime) => {
 
-            quote::quote! {
-                #[deny(unused_unsafe)]
-                unsafe {
-                    &*( #ptr as *const #ptr_type) as &#lifetime _
-                }
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &*( #ptr as *const #ptr_type) as &#lifetime _
+                    }
+                })
             }
         }
     })
@@ -164,8 +180,58 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_mut(_input: TokenStream) -> TokenStream {
-    (quote::quote! {}).into()
+pub fn unsafe_mut(input: TokenStream) -> TokenStream {
+    rules!(input.into() => {
+        ( $ptr:expr ) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &mut *#ptr
+                    }
+                })
+            }
+        }
+        ($ptr:expr, $lifetime:lifetime) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &mut *#ptr as &#lifetime mut _
+                    }
+                })
+            }
+        }
+        ($ptr:expr, $ptr_type:ty) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &mut *( #ptr as *mut #ptr_type )
+                    }
+                })
+            }
+        }
+        ($ptr:expr, $ptr_type:ty, $lifetime:lifetime) => {
+
+            let span = ptr.span();
+            quote_spanned! {span=>
+                ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        &mut *( #ptr as *mut #ptr_type ) as &#lifetime mut _
+                    }
+                })
+            }
+        }
+    })
+    .into()
 }
 
 #[proc_macro]
@@ -200,6 +266,24 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_set(_input: TokenStream) -> TokenStream {
-    (quote::quote! {}).into()
+pub fn unsafe_set(input: TokenStream) -> TokenStream {
+    rules!(input.into() => {
+        ( $ptr:expr, $value:expr ) => {
+
+            let span = ptr.span();
+            // @TODO Simplify once https://github.com/rust-lang/rust/issues/15701
+            // `#![feature(stmt_expr_attributes)]` is stable
+            //
+            // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
+            // need these ({ and }).
+            quote_spanned! {span=>
+                #[deny(unused_unsafe)]
+                #[allow(unsafe_code)] //@TODO everywhere
+                unsafe {
+                    *#ptr = #value;
+                }
+            }
+        }
+    })
+    .into()
 }

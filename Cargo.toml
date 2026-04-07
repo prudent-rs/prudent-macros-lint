@@ -1,14 +1,20 @@
 [package]
 name = "prudent-macros-lint"
 version = "0.0.3-delta"
-edition = "2018"
+
+# We need `proc-macro-rules` 0.4.0 or newer. Its immediate previous version was 0.2.1 (from 2019)
+# and that fails for us.
+#
+# Because of `proc-macro-rules` 0.4.0+, we need rust-version/MSRV 1.71.0, which is in Rust Edition
+# 2021.
+edition = "2021"
+rust-version = "1.71.0"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-proc-macro-rules = "0.4.0"
-quote = "1.0.45"
-syn = "2.0.117"
-proc-macro2 = "1.0.106"
-
+proc-macro-rules = "= 0.4.0"
+quote = "1.0.26"
+syn = "2.0.15"
+proc-macro2 = "1.0.60"
