@@ -12,7 +12,7 @@ compile_error!("If you use prudent-macros-lint (usually through feature 'lint_un
 #[proc_macro]
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
-        ( $f:expr => $( $arg:expr ),* ) => {
+        ( $f:expr $( => $( $arg:expr ),+ )? ) => {
 
             let span = f.span();
             // @TODO Simplify once https://github.com/rust-lang/rust/issues/15701
@@ -20,17 +20,30 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             //
             // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
             // need these ({ and }).
-            quote_spanned! {span=>
-                ({
-                #[deny(unused_unsafe)]
-                unsafe {
-                    #f(
-                        #(
-                            #arg
-                        ),*
-                    )
+            if let Some(arg) = arg {
+
+                quote_spanned! {span=>
+                    ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        #f(
+                            #(
+                                #arg
+                            ),*
+                        )
+                    }
+                    })
                 }
+            } else {
+
+                quote_spanned! {span=>
+                    ({
+                    #[deny(unused_unsafe)]
+                    unsafe {
+                        #f()
+                    }
                 })
+            }
             }
         }
     })
@@ -104,8 +117,46 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_ref(_input: TokenStream) -> TokenStream {
-    (quote::quote! {}).into()
+pub fn unsafe_ref(input: TokenStream) -> TokenStream {
+    rules!(input.into() => {
+        ($ptr:expr) => {
+            
+            quote::quote! {
+                #[deny(unused_unsafe)]
+                unsafe {
+                    &*#ptr
+                }
+            }
+        }
+        ($ptr:expr, $lifetime:lifetime) => {
+            
+            quote::quote! {
+                #[deny(unused_unsafe)]
+                unsafe {
+                    &*#ptr as &#lifetime _
+                }
+            }
+        }
+        ($ptr:expr, $ptr_type:ty) => {
+            
+            quote::quote! {
+                #[deny(unused_unsafe)]
+                unsafe {
+                    &*( #ptr as *const $ptr_type)
+                }
+            }
+        }
+        ($ptr:expr, $ptr_type:ty, $lifetime:lifetime) => {
+            
+            quote::quote! {
+                #[deny(unused_unsafe)]
+                unsafe {
+                    &*( #ptr as *const $ty) as &$lifetime _
+                }
+            }
+        }
+    })
+    .into()
 }
 
 #[proc_macro]
