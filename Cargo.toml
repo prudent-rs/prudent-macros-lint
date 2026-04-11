@@ -13,6 +13,10 @@ rust-version = "1.71.0"
 [lib]
 proc-macro = true
 
+[lints.rust]
+unexpected_cfgs = { level = "forbid"}
+unknown_lints = { level = "forbid"}
+
 [dependencies]
 proc-macro-rules = "= 0.4.0"
 quote = "1.0.26"

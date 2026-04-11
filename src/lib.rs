@@ -8,7 +8,6 @@ use syn::spanned::Spanned;
 #[cfg(not(debug_assertions))]
 compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of prudent crate), use it in debug build only.");
 
-// Procedural version.
 #[proc_macro]
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
@@ -60,6 +59,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             let span = method.span();
             quote_spanned! {span=>
                 ({
+                #[allow(unsafe_code)]
                 unsafe {
                     #this.#method()
                 }
@@ -72,6 +72,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             let span = method.span();
             quote_spanned! {span=>
                 ({
+                #[allow(unsafe_code)]
                 unsafe {
                     #this.#method(
                         #(
@@ -93,6 +94,7 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
 
             let span = stat.span();
             quote_spanned! {span=>
+                #[allow(unsafe_code)]
                 unsafe {
                     #stat = #val;
                 }
@@ -109,6 +111,7 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             // @TODO
             let span = stat.span();
             quote_spanned! {span=>
+                #[allow(unsafe_code)]
                 unsafe {
                 }
             }
@@ -126,6 +129,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &*#ptr
                     }
@@ -137,6 +141,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &*#ptr as &#lifetime _
                     }
@@ -148,6 +153,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &*( #ptr as *const #ptr_type)
                     }
@@ -159,6 +165,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &*( #ptr as *const #ptr_type) as &#lifetime _
                     }
@@ -177,6 +184,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &mut *#ptr
                     }
@@ -188,6 +196,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &mut *#ptr as &#lifetime mut _
                     }
@@ -199,6 +208,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type )
                     }
@@ -210,6 +220,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type ) as &#lifetime mut _
                     }
@@ -228,6 +239,7 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         *#ptr
                     }
@@ -239,6 +251,7 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         *( #ptr as *const #ptr_type)
                     }
@@ -261,7 +274,7 @@ pub fn unsafe_set(input: TokenStream) -> TokenStream {
             // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
             // need these ({ and }).
             quote_spanned! {span=>
-                #[allow(unsafe_code)] //@TODO everywhere
+                #[allow(unsafe_code)]
                 unsafe {
                     *#ptr = #value;
                 }
