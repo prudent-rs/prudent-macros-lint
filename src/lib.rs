@@ -22,7 +22,6 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         #f()
                     }
@@ -39,7 +38,6 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         #f(
                             #(
@@ -62,7 +60,6 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             let span = method.span();
             quote_spanned! {span=>
                 ({
-                #[deny(unused_unsafe)]
                 unsafe {
                     #this.#method()
                 }
@@ -75,7 +72,6 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             let span = method.span();
             quote_spanned! {span=>
                 ({
-                #[deny(unused_unsafe)]
                 unsafe {
                     #this.#method(
                         #(
@@ -97,7 +93,6 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
 
             let span = stat.span();
             quote_spanned! {span=>
-                #[deny(unused_unsafe)]
                 unsafe {
                     #stat = #val;
                 }
@@ -114,7 +109,6 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             // @TODO
             let span = stat.span();
             quote_spanned! {span=>
-                #[deny(unused_unsafe)]
                 unsafe {
                 }
             }
@@ -132,7 +126,6 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &*#ptr
                     }
@@ -144,7 +137,6 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &*#ptr as &#lifetime _
                     }
@@ -156,7 +148,6 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &*( #ptr as *const #ptr_type)
                     }
@@ -168,7 +159,6 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &*( #ptr as *const #ptr_type) as &#lifetime _
                     }
@@ -187,7 +177,6 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &mut *#ptr
                     }
@@ -199,7 +188,6 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &mut *#ptr as &#lifetime mut _
                     }
@@ -211,7 +199,6 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type )
                     }
@@ -223,7 +210,6 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type ) as &#lifetime mut _
                     }
@@ -242,7 +228,6 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         *#ptr
                     }
@@ -254,7 +239,6 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[deny(unused_unsafe)]
                     unsafe {
                         *( #ptr as *const #ptr_type)
                     }
@@ -277,7 +261,6 @@ pub fn unsafe_set(input: TokenStream) -> TokenStream {
             // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
             // need these ({ and }).
             quote_spanned! {span=>
-                #[deny(unused_unsafe)]
                 #[allow(unsafe_code)] //@TODO everywhere
                 unsafe {
                     *#ptr = #value;
