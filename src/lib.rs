@@ -21,6 +21,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         #f()
                     }
@@ -37,6 +38,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
+                    #[allow(unsafe_code)]
                     unsafe {
                         #f(
                             #(
