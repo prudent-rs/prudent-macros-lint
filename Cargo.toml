@@ -1,6 +1,6 @@
 [package]
 name = "prudent-macros-lint"
-version = "0.0.3-delta"
+version = "0.0.3"
 
 # We need `proc-macro-rules` 0.4.0 or newer. Its immediate previous version was 0.2.1 (from 2019)
 # and that fails for us.

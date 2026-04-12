@@ -37,7 +37,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
                 })
             }
         }
-        ( $f:expr => $( $arg:expr ),+ ) => {
+        ( $f:expr; $( $arg:expr ),+ ) => {
 
             let span = f.span();
             // @TODO Simplify once https://github.com/rust-lang/rust/issues/15701
@@ -78,7 +78,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             }
         }
 
-        ( $this:expr =>. $method:ident => $( $arg:expr ),* ) => {
+        ( $this:expr =>. $method:ident, $( $arg:expr ),* ) => {
 
             let span = method.span();
             quote_spanned! {span=>
