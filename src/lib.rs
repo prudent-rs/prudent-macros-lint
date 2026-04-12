@@ -4,7 +4,6 @@ use proc_macro::TokenStream;
 use proc_macro_rules::rules;
 use quote::quote_spanned;
 use syn::spanned::Spanned;
-use proc_macro2::Span;
 
 #[cfg(not(debug_assertions))]
 compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of prudent crate), use it in debug build only.");
@@ -13,10 +12,10 @@ compile_error!("If you use prudent-macros-lint (usually through feature 'lint_un
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
     rules!(input.into() => {
         ( $f:expr ) => {
-            // Either of the following is fine: f.span() or Span::call_site()
-            //
-            // let span = f.span();
-            let span = Span::call_site();
+            // We HAVE TO use `span()` of an input token. We can NOT use
+            // proc_macro2::Span::call_site() - it fails to trigger `unused_unsafe` lint when it
+            // should.
+            let span = f.span();
 
             // We HAVE TO use `quote::quote_spanned`. If we used `quote::quote` instead, any
             // `#[deny(unused_unsafe)]` or `#[forbid(unused_unsafe)]` on the user's side would have
@@ -78,7 +77,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             }
         }
 
-        ( $this:expr =>. $method:ident, $( $arg:expr ),* ) => {
+        ( $this:expr =>. $method:ident; $( $arg:expr ),* ) => {
 
             let span = method.span();
             quote_spanned! {span=>
