@@ -6,7 +6,7 @@ use quote::quote_spanned;
 use syn::spanned::Spanned;
 
 #[cfg(not(debug_assertions))]
-compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of prudent crate), use it in debug build only.");
+compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of 'prudent' crate), use it with debug profile only.");
 
 #[proc_macro]
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
@@ -30,6 +30,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         #f()
                     }
@@ -47,6 +48,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         #f(
                             #(
@@ -70,6 +72,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                 #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                 unsafe {
                     #this.#method()
                 }
@@ -83,6 +86,7 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                 #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                 unsafe {
                     #this.#method(
                         #(
@@ -105,6 +109,7 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             let span = stat.span();
             quote_spanned! {span=>
                 #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                 unsafe {
                     #stat = #val;
                 }
@@ -115,6 +120,11 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             // @TODO
             let span = stat.span();
             quote_spanned! {span=>
+                #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                unsafe {
+                    // @TODO
+                }
             }
         }
         ($stat:path { $( $_suffix:tt )* } $_val:expr) => {
@@ -122,6 +132,7 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             let span = stat.span();
             quote_spanned! {span=>
                 #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                 unsafe {
                 }
             }
@@ -140,6 +151,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &*#ptr
                     }
@@ -152,6 +164,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &*#ptr as &#lifetime _
                     }
@@ -164,6 +177,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &*( #ptr as *const #ptr_type)
                     }
@@ -176,6 +190,7 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &*( #ptr as *const #ptr_type) as &#lifetime _
                     }
@@ -195,6 +210,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &mut *#ptr
                     }
@@ -207,6 +223,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &mut *#ptr as &#lifetime mut _
                     }
@@ -219,6 +236,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type )
                     }
@@ -231,6 +249,7 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type ) as &#lifetime mut _
                     }
@@ -250,6 +269,7 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         *#ptr
                     }
@@ -262,6 +282,7 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
+                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                     unsafe {
                         *( #ptr as *const #ptr_type)
                     }
@@ -285,6 +306,7 @@ pub fn unsafe_set(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 #[allow(unsafe_code)]
+                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
                 unsafe {
                     *#ptr = #value;
                 }
