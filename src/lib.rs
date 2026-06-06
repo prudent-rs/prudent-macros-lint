@@ -2,11 +2,26 @@
 
 use proc_macro::TokenStream;
 use proc_macro_rules::rules;
-use quote::quote_spanned;
+use quote::{quote_spanned, ToTokens, TokenStreamExt};
+use std::str::FromStr;
 use syn::spanned::Spanned;
 
 #[cfg(not(debug_assertions))]
 compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of 'prudent' crate), use it with debug profile only.");
+
+//const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str = "";
+const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str =
+    r#"#[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]"#;
+const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL: TokenStreamFromStr<'static> =
+    TokenStreamFromStr(POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE);
+
+#[derive(Clone, Copy, Debug)]
+struct TokenStreamFromStr<'a>(&'a str);
+impl<'a> ToTokens for TokenStreamFromStr<'a> {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        tokens.append_all(proc_macro2::TokenStream::from_str(self.0));
+    }
+}
 
 #[proc_macro]
 pub fn unsafe_fn(input: TokenStream) -> TokenStream {
@@ -30,7 +45,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             quote_spanned! {span=>
                 ({
                     #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         #f()
                     }
