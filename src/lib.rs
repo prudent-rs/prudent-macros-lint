@@ -1,7 +1,10 @@
 #![doc = include_str!("../README.md")]
 
-use proc_macro::TokenStream;
 use proc_macro_rules::rules;
+
+use proc_macro::TokenStream as ProcTokenStream;
+use proc_macro2::TokenStream;
+
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use std::str::FromStr;
 use syn::spanned::Spanned;
@@ -9,22 +12,25 @@ use syn::spanned::Spanned;
 #[cfg(not(debug_assertions))]
 compile_error!("If you use prudent-macros-lint (usually through feature 'lint_unused_unsafe' of 'prudent' crate), use it with debug profile only.");
 
-//const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str = "";
-const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str =
-    r#"#[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]"#;
+#[cfg(not(feature = "lint_unused_unsafe_all"))]
+const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str = "";
+#[cfg(feature = "lint_unused_unsafe_all")]
+const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE: &str = "#[forbid(unused_unsafe)]";
+
 const POTENTIALLY_LINT_UNUSED_UNSAFE_ALL: TokenStreamFromStr<'static> =
     TokenStreamFromStr(POTENTIALLY_LINT_UNUSED_UNSAFE_ALL_CODE);
 
-#[derive(Clone, Copy, Debug)]
+const ALLOW_UNSAFE_CODE: TokenStreamFromStr<'static> = TokenStreamFromStr("#[allow(unsafe_code)]");
+
 struct TokenStreamFromStr<'a>(&'a str);
 impl<'a> ToTokens for TokenStreamFromStr<'a> {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        tokens.append_all(proc_macro2::TokenStream::from_str(self.0));
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append_all(TokenStream::from_str(self.0));
     }
 }
 
 #[proc_macro]
-pub fn unsafe_fn(input: TokenStream) -> TokenStream {
+pub fn unsafe_fn(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ( $f:expr ) => {
             // We HAVE TO use `span()` of an input token. We can NOT use
@@ -44,7 +50,7 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
+                    #ALLOW_UNSAFE_CODE
                     #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         #f()
@@ -62,8 +68,8 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
             // need these ({ and }).
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         #f(
                             #(
@@ -79,15 +85,15 @@ pub fn unsafe_fn(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_method(input: TokenStream) -> TokenStream {
+pub fn unsafe_method(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ( $this:expr =>. $method:ident ) => {
 
             let span = method.span();
             quote_spanned! {span=>
                 ({
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                     #this.#method()
                 }
@@ -100,8 +106,8 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
             let span = method.span();
             quote_spanned! {span=>
                 ({
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                     #this.#method(
                         #(
@@ -117,14 +123,14 @@ pub fn unsafe_method(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
+pub fn unsafe_static_set(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ($stat:path, $val:expr) => {
 
             let span = stat.span();
             quote_spanned! {span=>
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                     #stat = #val;
                 }
@@ -135,8 +141,8 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             // @TODO
             let span = stat.span();
             quote_spanned! {span=>
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                     // @TODO
                 }
@@ -146,8 +152,8 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
             // @TODO
             let span = stat.span();
             quote_spanned! {span=>
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                 }
             }
@@ -158,15 +164,15 @@ pub fn unsafe_static_set(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_ref(input: TokenStream) -> TokenStream {
+pub fn unsafe_ref(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ($ptr:expr) => {
 
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &*#ptr
                     }
@@ -178,8 +184,8 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &*#ptr as &#lifetime _
                     }
@@ -191,8 +197,8 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &*( #ptr as *const #ptr_type)
                     }
@@ -204,8 +210,8 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &*( #ptr as *const #ptr_type) as &#lifetime _
                     }
@@ -217,15 +223,15 @@ pub fn unsafe_ref(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_mut(input: TokenStream) -> TokenStream {
+pub fn unsafe_mut(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ( $ptr:expr ) => {
 
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &mut *#ptr
                     }
@@ -237,8 +243,8 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &mut *#ptr as &#lifetime mut _
                     }
@@ -250,8 +256,8 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type )
                     }
@@ -263,8 +269,8 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         &mut *( #ptr as *mut #ptr_type ) as &#lifetime mut _
                     }
@@ -276,15 +282,15 @@ pub fn unsafe_mut(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_val(input: TokenStream) -> TokenStream {
+pub fn unsafe_val(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ( $ptr:expr ) => {
 
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         *#ptr
                     }
@@ -296,8 +302,8 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
             let span = ptr.span();
             quote_spanned! {span=>
                 ({
-                    #[allow(unsafe_code)]
-                    #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                    #ALLOW_UNSAFE_CODE
+                    #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                     unsafe {
                         *( #ptr as *const #ptr_type)
                     }
@@ -309,7 +315,7 @@ pub fn unsafe_val(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn unsafe_set(input: TokenStream) -> TokenStream {
+pub fn unsafe_set(input: ProcTokenStream) -> ProcTokenStream {
     rules!(input.into() => {
         ( $ptr:expr, $value:expr ) => {
 
@@ -320,8 +326,8 @@ pub fn unsafe_set(input: TokenStream) -> TokenStream {
             // See prudent-macros-enforce for why here I put in ({ ... }). But @TODO check if we
             // need these ({ and }).
             quote_spanned! {span=>
-                #[allow(unsafe_code)]
-                #[cfg_attr(feature = "lint_unused_unsafe_all", forbid(unused_unsafe))]
+                #ALLOW_UNSAFE_CODE
+                #POTENTIALLY_LINT_UNUSED_UNSAFE_ALL
                 unsafe {
                     *#ptr = #value;
                 }
